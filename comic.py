@@ -325,8 +325,9 @@ class Comic():
 #            [self.chapters[key].get_all_pages() for key in down_list]
             #[self.download_chapter(key=title,p=p) for title in self.chapters.keys()]
             for key in down_list:
+                print(i)
                 self.chapters[key].get_all_pages()
-                driver.quit
+                print(i)
             [self.download_chapter(key=title,p=p) for title in down_list]
             # close browser
 #            for i in self.chapters.keys():
@@ -335,7 +336,7 @@ class Comic():
             with open(update_path,'w') as json_f:
                 for i in self.chapters.keys():
                     json_f.write(i+'\n')
-        #driver.quit()
+        driver.quit()
 
 
         
