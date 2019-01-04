@@ -2,7 +2,7 @@
 I add update.txt to avoid downloads twice when only want update. change phantomJS to firefox. and fix bug.
 # Dependence  
 Firefox   
-![geckodriver](https://github.com/mozilla/geckodriver/releases)  
+[geckodriver](https://github.com/mozilla/geckodriver/releases)  
 pip3 install selenium requests   
 # Usage
 add geckodriver to you exec path(or current dir)  
