@@ -1,19 +1,23 @@
-#lunarjoll version  
-I add update.txt to avoid downloads twice when only wnat update. change phantomJS to firefox. and fix bug  
-# dependence  
+# lunarjoll version  
+I add update.txt to avoid downloads twice when only want update. change phantomJS to firefox. and fix bug.
+# Dependence  
 Firefox   
-![geckodriver]:(https://github.com/mozilla/geckodriver/releases)
+![geckodriver](https://github.com/mozilla/geckodriver/releases)  
 pip3 install selenium requests   
-# USAGE
+# Usage
 add geckodriver to you exec path(or current dir)  
-add url to url.txt(only support manhua.dmzj.com, not dmzj.com)  
+add you want pull or update url to url.txt  (only support manhua.dmzj.com, not dmzj.com)  
 python3 download_f.py url.txt   
 # TAKE CARE
-firefox --headless mode is't support 32bit linux in raspberry. (NO test but support 64bit kernel in pi)  
-I don't use multiprocess options, so don't use multi options when get wrong.  
+Firefox --headless mode is't support 32bit linux in raspberry. (NO test but support 64bit kernel in pi)  
+I don't use multiprocess options, so don't use multi options when get wrong.   
+It only test in Linux.  
 
 
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+# There is origin README
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # ComicSpider
 The first open-source crawler of raw comics images on [dmzj](http://manhua.dmzj.com/) website.  
 第一个开源的[动漫之家](http://manhua.dmzj.com/)漫画站电脑版原图爬虫
@@ -27,7 +31,7 @@ The first open-source crawler of raw comics images on [dmzj](http://manhua.dmzj.
 The implementation of crawler's logic is in `comic.py`,you can develop your own crawler programs based on it.  
 We provide a console crawler `download_f.py` and a GUI crawler `comic_gui.py`.  
 And we also provide packaged win32/64 `.exe` programs.
-  
+
 第一个从[动漫之家](http://manhua.dmzj.com/)漫画站爬取电脑版原图的开源爬虫。使用[PhantomJS](http://phantomjs.org/),和 [selenuium](https://github.com/SeleniumHQ/selenium)获取每个漫画章节的分页索引。爬取并下载漫画图片到本地文件。  
 爬虫逻辑实现在`comic.py`，功能完整，支持增量下载，可供开发者自行开发爬虫。  
 提供命令行`download_f.py`和图形界面`comic_gui.py`两种爬虫程序。  
@@ -119,7 +123,7 @@ Results:
 ![结果](./pics/结果.PNG)
 As you see, the program collected a comic in one floder and below the floder are chapter floders, in each chapter floder there are .jpg files of all pages of the chapter.  
 Or using packaged binary program:    
-Double click `comicspider_console.exe` to run with deafult arguments. 
+Double click `comicspider_console.exe` to run with deafult arguments.
 Or in cmd/shell/.bat:  
     comicspider_console \<your file\> \<multi-threads flag\>
 # Packaging打包  
