@@ -22,7 +22,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 options = Options()
 options.add_argument('-headless')
-driver = Firefox(executable_path='/usr/bin/geckodriver', options=options)
+driver = Firefox( options=options)
 
 
 def validatetitle(title):
@@ -57,6 +57,7 @@ class Chapter():
         r_p=r'<option value="(.*?)".*?>第(\d*?)页<'
         try :
             #driver = Firefox( options=options)
+            driver = Firefox( options=options)
             driver.get(self.chapter_url)
             text=driver.page_source
             st=re.findall(r_slt,text)[0]
@@ -67,7 +68,7 @@ class Chapter():
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         finally:
-            #driver.quit()
+            driver.quit()
             print('Got {l} pages in chapter {ch}'.format(l=len(self.pages),ch=self.chapter_title))
             return 1
         
@@ -321,8 +322,11 @@ class Comic():
 
         if down_list != []:
             #[self.chapters[key].get_pages() for key in self.chapters.keys()]
-            [self.chapters[key].get_all_pages() for key in down_list]
+#            [self.chapters[key].get_all_pages() for key in down_list]
             #[self.download_chapter(key=title,p=p) for title in self.chapters.keys()]
+            for key in down_list:
+                self.chapters[key].get_all_pages()
+                driver.quit
             [self.download_chapter(key=title,p=p) for title in down_list]
             # close browser
 #            for i in self.chapters.keys():
@@ -331,7 +335,7 @@ class Comic():
             with open(update_path,'w') as json_f:
                 for i in self.chapters.keys():
                     json_f.write(i+'\n')
-        driver.quit()
+        #driver.quit()
 
 
         
