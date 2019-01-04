@@ -9,7 +9,7 @@ import re,os,traceback
 import requests
 import json
 from io import BytesIO
-from PIL import Image
+#from PIL import Image
 from selenium import webdriver
 from multiprocessing import Pool,cpu_count,freeze_support
 #from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -20,6 +20,9 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as expected
 from selenium.webdriver.support.wait import WebDriverWait
 
+options = Options()
+options.add_argument('-headless')
+driver = Firefox(executable_path='/usr/bin/geckodriver', options=options)
 
 
 def validatetitle(title):
@@ -43,10 +46,31 @@ class Chapter():
             os.mkdir(self.chapter_dir)
         self.pages=[]
 
-        browser_options = Options()
-        browser_options.add_argument('-headless')
-        self.driver = Firefox(executable_path='/usr/bin/geckodriver', options=browser_options)
+#    def open_browser(self):
+#        browser_options = Options()
+#        browser_options.add_argument('-headless')
+#       #self.driver = Firefox(executable_path='/usr/bin/geckodriver', options=browser_options)
+#        self.driver = Firefox( options=browser_options)
     
+    def get_all_pages(self):
+        r_slt=r'onchange="select_page\(\)">([\s\S]*?)</select>'
+        r_p=r'<option value="(.*?)".*?>第(\d*?)页<'
+        try :
+            #driver = Firefox( options=options)
+            driver.get(self.chapter_url)
+            text=driver.page_source
+            st=re.findall(r_slt,text)[0]
+            self.pages = [(int(p[-1]),p[0]) for p in re.findall(r_p,st)]
+        except Exception:
+            traceback.print_exc()
+            self.pages = []
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        finally:
+            #driver.quit()
+            print('Got {l} pages in chapter {ch}'.format(l=len(self.pages),ch=self.chapter_title))
+            return 1
+        
     def get_pages(self):
         '''
         通过Phantomjs获得网页完整源码，解析出每一页漫画的url
@@ -59,7 +83,7 @@ class Chapter():
         try:
 #            options = Options()
 #            options.add_argument('-headless')
-#            driver = Firefox(executable_path='/usr/bin/geckodriver', options=options)
+#            driver = Firefox(options=options)
 # last move init
 
             #wait = WebDriverWait(driver, timeout=10)
@@ -72,8 +96,8 @@ class Chapter():
             #firefox_profile.set_preference('permissions.default.image', 2)
             #firefox_profile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
             #driver = webdriver.Firefox(firefox_profile=firefox_profile)
-            self.driver.get(self.chapter_url)
-            text=self.driver.page_source
+            driver.get(self.chapter_url)
+            text=driver.page_source
             st=re.findall(r_slt,text)[0]
             self.pages = [(int(p[-1]),p[0]) for p in re.findall(r_p,st)]
         except Exception:
@@ -82,12 +106,12 @@ class Chapter():
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         finally:
-            #driver.quit()
+#            driver.quit()
             print('Got {l} pages in chapter {ch}'.format(l=len(self.pages),ch=self.chapter_title))
             return self.pages
     
-    def close_browser(self):
-        self.driver.quit()
+#    def close_browser(self):
+#        self.driver.quit()
 
     def download_page(self,page):
         '''
@@ -295,20 +319,22 @@ class Comic():
         for i in delete_list:
             down_list.remove(i)
 
-        #[self.chapters[key].get_pages() for key in self.chapters.keys()]
-        [self.chapters[key].get_pages() for key in down_list]
-        #[self.download_chapter(key=title,p=p) for title in self.chapters.keys()]
-        [self.download_chapter(key=title,p=p) for title in down_list]
-        for i in self.chapters.keys():
-            self.chapters[i].close_browser()
-            break
-        with open(update_path,'w') as json_f:
-            for i in self.chapters.keys():
-                json_f.write(i+'\n')
+        if down_list != []:
+            #[self.chapters[key].get_pages() for key in self.chapters.keys()]
+            [self.chapters[key].get_all_pages() for key in down_list]
+            #[self.download_chapter(key=title,p=p) for title in self.chapters.keys()]
+            [self.download_chapter(key=title,p=p) for title in down_list]
+            # close browser
+#            for i in self.chapters.keys():
+#                self.chapters[i].close_browser()
+#                break
+            with open(update_path,'w') as json_f:
+                for i in self.chapters.keys():
+                    json_f.write(i+'\n')
+        driver.quit()
 
 
         
-
 
 
 

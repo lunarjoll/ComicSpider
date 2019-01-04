@@ -1,3 +1,19 @@
+#lunarjoll version  
+I add update.txt to avoid downloads twice when only wnat update. change phantomJS to firefox. and fix bug  
+# dependence  
+Firefox   
+![geckodriver]:(https://github.com/mozilla/geckodriver/releases)
+pip3 install selenium requests   
+# USAGE
+add geckodriver to you exec path(or current dir)  
+add url to url.txt(only support manhua.dmzj.com, not dmzj.com)  
+python3 download_f.py url.txt   
+# TAKE CARE
+firefox --headless mode is't support 32bit linux in raspberry. (NO test but support 64bit kernel in pi)  
+I don't use multiprocess options, so don't use multi options when get wrong.  
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # ComicSpider
 The first open-source crawler of raw comics images on [dmzj](http://manhua.dmzj.com/) website.  
 第一个开源的[动漫之家](http://manhua.dmzj.com/)漫画站电脑版原图爬虫
