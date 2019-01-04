@@ -7,11 +7,19 @@ Created on Sun Jul 23 11:03:51 2017
 
 import re,os,traceback
 import requests
+import json
 from io import BytesIO
 from PIL import Image
 from selenium import webdriver
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from multiprocessing import Pool,cpu_count,freeze_support
+#from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver import Firefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support import expected_conditions as expected
+from selenium.webdriver.support.wait import WebDriverWait
+
 
 
 def validatetitle(title):
@@ -35,6 +43,10 @@ class Chapter():
             os.mkdir(self.chapter_dir)
         self.pages=[]
 
+        browser_options = Options()
+        browser_options.add_argument('-headless')
+        self.driver = Firefox(executable_path='/usr/bin/geckodriver', options=browser_options)
+    
     def get_pages(self):
         '''
         通过Phantomjs获得网页完整源码，解析出每一页漫画的url
@@ -45,12 +57,23 @@ class Chapter():
         r_slt=r'onchange="select_page\(\)">([\s\S]*?)</select>'
         r_p=r'<option value="(.*?)".*?>第(\d*?)页<'
         try:
-            dcap = dict(DesiredCapabilities.PHANTOMJS)
-            # 不载入图片，爬页面速度会快很多
-            dcap["phantomjs.page.settings.loadImages"] = False
-            driver = webdriver.PhantomJS(desired_capabilities=dcap)
-            driver.get(self.chapter_url)
-            text=driver.page_source
+#            options = Options()
+#            options.add_argument('-headless')
+#            driver = Firefox(executable_path='/usr/bin/geckodriver', options=options)
+# last move init
+
+            #wait = WebDriverWait(driver, timeout=10)
+            #dcap = dict(DesiredCapabilities.PHANTOMJS)
+            ## 不载入图片，爬页面速度会快很多
+            #dcap["phantomjs.page.settings.loadImages"] = False
+            #driver = webdriver.PhantomJS(desired_capabilities=dcap)
+
+            #firefox_profile = webdriver.FirefoxProfile()
+            #firefox_profile.set_preference('permissions.default.image', 2)
+            #firefox_profile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
+            #driver = webdriver.Firefox(firefox_profile=firefox_profile)
+            self.driver.get(self.chapter_url)
+            text=self.driver.page_source
             st=re.findall(r_slt,text)[0]
             self.pages = [(int(p[-1]),p[0]) for p in re.findall(r_p,st)]
         except Exception:
@@ -59,10 +82,13 @@ class Chapter():
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         finally:
-            driver.quit()
+            #driver.quit()
             print('Got {l} pages in chapter {ch}'.format(l=len(self.pages),ch=self.chapter_title))
             return self.pages
     
+    def close_browser(self):
+        self.driver.quit()
+
     def download_page(self,page):
         '''
         下载一页漫画
@@ -78,10 +104,20 @@ class Chapter():
         url=page[-1]
         if not os.path.exists(self.chapter_dir):
             os.mkdir(self.chapter_dir)
-        path=os.path.join(self.chapter_dir,str(n)+'.'+url.split('.')[-1])
+# 更好的通用性, 001.jpg更好
+        #path=os.path.join(self.chapter_dir,str(n)+'.'+url.split('.')[-1])
+        if n <10 :
+            new_n= '00'+str(n)
+        elif n<100 :
+            new_n='0'+str(n)
+        else:
+            new_n=str(n)
+            
+        #path=os.path.join(self.chapter_dir,str(n)+'.'+url.split('.')[-1])
+        path=os.path.join(self.chapter_dir,new_n +'.'+url.split('.')[-1])
         try:
             print('Downloading page {n} into file {f}'.format(n=n,f=path))
-            res=requests.get(url,headers=headers)
+            res=requests.get('http:'+url,headers=headers)
             data=res.content
             with open(path,'wb') as f:
                 f.write(data)
@@ -143,6 +179,7 @@ class Comic():
         if not os.path.exists(self.comic_dir):
             os.mkdir(self.comic_dir)
         print('There are {n} chapters in comic {c}'.format(n=self.chapter_num,c=self.comic_title))
+        #self.chapters 的格式
         self.chapters={info[0]:Chapter(self.comic_title, self.comic_dir, *info) for info in self.chapter_urls}
         self.pages=[]
         
@@ -165,13 +202,22 @@ class Comic():
         except ConnectionError:
             traceback.print_exc()
             raise ConnectionError
+        #print(text)
+        #print(re.findall(r_title,text)[0])
+        #r_title=r'<span class="anim_title_text"><a href="../guoranwodeqingchunlianaixijugaocuolecomic/"><h1>果然我的青春恋爱喜剧搞错了@comic</h1></a></span>'
         title=re.findall(r_title,text)[0]
+        #title= '<span class="anim_title_text"><a href="../guoranwodeqingchunlianaixijugaocuolecomic/"><h1>果然我的青春恋爱喜剧搞错了@comic</h1></a></span>'
         cb=re.findall(r_cb,text)[0]
+
+        #This is why we should give url tail must is http:/xxxx/
+        #c[0] is title, c[1] is url
+        #for 是列表返回
         chapter_urls=[(c[0],root+c[1]+'#@page=1') for c in re.findall(r_cs,cb)]
         cover_url=re.findall(r_cover,text)[0]
         des=re.findall(r_des,text)
         return title,des,cover_url,chapter_urls
     
+    #No use
     def update(self):
         '''
         更新漫画（未测试）
@@ -208,6 +254,7 @@ class Comic():
                 traceback.print_exc()
         return text
 
+# It is 2
     def download_chapter(self,key,p=True):
         '''
         下载一个章节
@@ -219,17 +266,53 @@ class Comic():
             print('No such chapter {key}\nThere are chapters:\n{chs}'.format(key=key,chs='\n'.join(self.chapters.keys())))
             return None
         if not self.chapters[key].pages:
-            self.pages+=self.chapters[key].get_pages()
+#self.pages is Class Comic is no used,
+            #self.pages+=self.chapters[key].get_pages()
+            self.chapters[key].get_pages()
+        #多进程
         (self.chapters[key].download_chapter_m() if p else self.chapters[key].download_chapter_s())
 
+
+# it is start command by lunarjoll, it is 1st
     def download_all_chapters_s(self,p=False):
         '''
         下载所有章节，在章节层面单线程
             p:在页层面是否使用多线程
         '''
         print('Downloading all chapters of comic {title} into dir {d}'.format(title=self.comic_title,d=self.comic_dir))
-        [self.download_chapter(key=title,p=p) for title in self.chapters.keys()]
+#循环章节
+#在这里 删除chapters,实现update
+        update_path=os.path.join(self.comic_dir,'update.txt')
+        delete_list=[]
+        down_list=[]
+        if os.path.exists(update_path):
+            with open(update_path,'r') as json_f:
+                for line in json_f:
+                    delete_list.append(line.strip('\n'))
+        #print (delete_list)
+        for i in self.chapters.keys():
+            down_list.append(i)
+        for i in delete_list:
+            down_list.remove(i)
 
+        #[self.chapters[key].get_pages() for key in self.chapters.keys()]
+        [self.chapters[key].get_pages() for key in down_list]
+        #[self.download_chapter(key=title,p=p) for title in self.chapters.keys()]
+        [self.download_chapter(key=title,p=p) for title in down_list]
+        for i in self.chapters.keys():
+            self.chapters[i].close_browser()
+            break
+        with open(update_path,'w') as json_f:
+            for i in self.chapters.keys():
+                json_f.write(i+'\n')
+
+
+        
+
+
+
+
+# It func is't appoint, No use
     def download_all_chapters_p(self):
         '''
         在章节层面多线程

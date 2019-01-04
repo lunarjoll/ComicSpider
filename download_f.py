@@ -11,6 +11,17 @@ def download_from_file(path,p=False):
     with open(path,'r') as f:
         ls=f.readlines()
     for l in ls:
+# should trust url end is /
+        l=l.strip(' \n')
+        if l.find('manhua.dmzj.com') == -1:
+            print("This script only support https://manhua.dmzj.com, new web www.dmzj.com's manhua not support")
+            break
+        if not l.endswith('/'):
+            print(l)
+            print("urls should end with / ")
+            break
+        if l=='':
+            continue
         comic=Comic(l)
         comic.download_all_chapters_s(p)
 if __name__=='__main__':
